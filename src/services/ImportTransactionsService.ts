@@ -1,6 +1,8 @@
 import { getCustomRepository, getRepository, In } from 'typeorm';
+
 import csvParse from 'csv-parse';
 import fs from 'fs';
+
 import Transaction from '../models/Transaction';
 import TransactionsRepository from '../repositories/TransactionsRepository';
 import Category from '../models/Category';
@@ -14,7 +16,7 @@ interface CSVTransaction {
 
 class ImportTransactionsService {
   async execute(filePath: string): Promise<Transaction[]> {
-    const transactionRepository = getCustomRepository(TransactionsRepository);
+    const transactionsRepository = getCustomRepository(TransactionsRepository);
     const categoriesRepository = getRepository(Category);
 
     const contactsReadStream = fs.createReadStream('filePath');
@@ -64,9 +66,9 @@ class ImportTransactionsService {
 
     await categoriesRepository.save(newCategories);
 
-    const finalCategories = [...newCategories, existentCategories];
+    const finalCategories = [...newCategories, ...existentCategories];
 
-    const createdTransactions = transactionRepository.create(
+    const createdTransactions = transactionsRepository.create(
       transactions.map(transaction => ({
         title: transaction.title,
         type: transaction.type,
@@ -77,7 +79,7 @@ class ImportTransactionsService {
       })),
     );
 
-    await transactionRepository.save(createdTransactions);
+    await transactionsRepository.save(createdTransactions);
 
     await fs.promises.unlink(filePath);
 
